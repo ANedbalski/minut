@@ -29,21 +29,21 @@ const guestRepo = new GuestInMemory();
 const propertyRepo = new PropertyInMemory();
 const chatRepo = new ChatInMemory();
 
-// struct used to hold all serice implmentations to inject to the controllers
+// struct used to hold all serice implmentations and to inject them  to the controllers
 const serviceDI = {
-    //Manager service
+    //Manager service handlers
     getManager: makeGetManager(managerRepo),
     addManager: makeAddManager(managerRepo),
     updateManager: makeUpdateManager(managerRepo),
 
-    //Manage proeprties services
+    //Manager properties services handlers
     listProperties: makeListProperties(propertyRepo),
     getProperty: makeGetProperty(propertyRepo),
     addProperty: makeAddProperty(propertyRepo),
     updateProperty: makeUpdateProperty(propertyRepo),
     getReservations: makeGetPropertyReservations(reservationRepo),
 
-    //guests serviceDI
+    //guests service handlers
     getGuest: makeGetGuest(guestRepo),
     addGuest: makeAddGuest(guestRepo),
     updateGuest: makeUpdateGuest(guestRepo),
@@ -52,9 +52,9 @@ const serviceDI = {
     bookProperty: makeBookProperty(reservationRepo),
     unbookProperty: makeUnbookProperty(reservationRepo),
 
-    // chat dependency injections
+    // chat service handlers
     addMessage: makeAddMessage(chatRepo),
-    getConversation: makeGetConversation(chatRepo),
+    getConversation: makeGetConversation(chatRepo)
 };
 
 const http = serverFactory(serviceDI, log.child({ module: 'http' }));
