@@ -17,6 +17,7 @@ import {
     makeBookProperty,
     makeUnbookProperty
 } from './controllers/v1/guest';
+import { makeGetConversation, makeAddMessage } from './controllers/v1/chat';
 
 export default function makeV1Routes(di: any) {
     let apiV1 = express.Router();
@@ -51,8 +52,8 @@ export default function makeV1Routes(di: any) {
     apiV1.delete('/booking/:bookId', auth, makeUnbookProperty(di.getGuest, di.unbookProperty));
 
     // chat API
-    apiV1.get('/chat/:userId');
-    apiV1.post('/chat/:userId');
+    apiV1.get('/chat/:userId', auth, makeGetConversation(di.getConversation));
+    apiV1.post('/chat/:userId', auth, makeAddMessage(di.addMessage));
 
     return apiV1;
 }

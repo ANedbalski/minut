@@ -18,6 +18,8 @@ import { makeGetGuest, makeUpdateGuest, makeAddGuest } from './domain/manager/se
 import { ManagerInMemory } from './repository/inmemory/manager';
 import { PropertyInMemory } from './repository/inmemory/property';
 import { GuestInMemory } from './repository/inmemory/guest';
+import { ChatInMemory } from './repository/inmemory/chat';
+import { makeAddMessage, makeGetConversation } from './domain/manager/services/chat';
 
 log.info('initialize modules');
 //initialize repositories
@@ -25,6 +27,7 @@ const reservationRepo = new ReservationInMemory();
 const managerRepo = new ManagerInMemory();
 const guestRepo = new GuestInMemory();
 const propertyRepo = new PropertyInMemory();
+const chatRepo = new ChatInMemory();
 
 // struct used to hold all serice implmentations to inject to the controllers
 const serviceDI = {
@@ -47,7 +50,11 @@ const serviceDI = {
     searchProperties: makeSearchProperties(propertyRepo),
     viewProperty: makeViewProperty(propertyRepo),
     bookProperty: makeBookProperty(reservationRepo),
-    unbookProperty: makeUnbookProperty(reservationRepo)
+    unbookProperty: makeUnbookProperty(reservationRepo),
+
+    // chat dependency injections
+    addMessage: makeAddMessage(chatRepo),
+    getConversation: makeGetConversation(chatRepo),
 };
 
 const http = serverFactory(serviceDI, log.child({ module: 'http' }));
