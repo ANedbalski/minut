@@ -4,8 +4,8 @@
     "description": "",
     "main": "src/app.ts",
     "scripts": {
-        "start": "node build/server.js",
-        "build": "rm -rf build/ && tsc",
+        "start": "node build/app.js",
+        "build": "tsc -p .",
         "test": "mocha --require ts-node/register --watch-extensions ts '**/*.test.ts'"
     },
     "author": "",
