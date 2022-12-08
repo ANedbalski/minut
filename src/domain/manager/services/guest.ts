@@ -15,11 +15,13 @@ export function makeGetGuest(repo: GuestRepository) {
             repo.get(id)
                 .then((res) => {
                     if (!res) {
+                        log.info('guest not found');
                         reject(new Error('guest not found'));
                     }
                     resolve(res!);
                 })
                 .catch((e) => {
+                    log.error(`errro finding guest: ${e}`);
                     reject(e);
                 });
         });

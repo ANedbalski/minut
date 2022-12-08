@@ -1,5 +1,6 @@
 import Guest from '../../domain/manager/guest';
 import { GuestRepository } from '../../domain/manager/services/guest';
+import log from '../../utils/logger';
 import { fixtureGuests } from './fixtures';
 
 export class GuestInMemory implements GuestRepository {
@@ -10,7 +11,8 @@ export class GuestInMemory implements GuestRepository {
 
     get(id: string): Promise<Guest> {
         return new Promise((resolve, reject) => {
-            const i = this.items.findIndex((item) => item.getId() === id);
+            log.info(`searching user id: ${id}`);
+            const i = this.items.findIndex((item) => item.getId() == id);
             if (i < 0) {
                 reject(new Error('record not found'));
             }
@@ -21,7 +23,7 @@ export class GuestInMemory implements GuestRepository {
     add(guest: Guest) {
         return new Promise<Guest>((resolve, reject) => {
             if (this.items.find((item) => item.getId() === guest.getId())) {
-                reject(new Error('manager with this id already exist'));
+                reject(new Error('guest with this id already exist'));
             }
             this.items.push(guest);
             resolve(guest);

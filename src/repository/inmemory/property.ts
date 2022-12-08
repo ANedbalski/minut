@@ -2,6 +2,7 @@ import Property from '../../domain/manager/property';
 import Manager from '../../domain/manager/manager';
 import { PropertyRepository } from '../../domain/manager/services/property';
 import { fixtureProperties } from './fixtures';
+import log from '../../utils/logger';
 
 export class PropertyInMemory implements PropertyRepository {
     private items: Array<Property>;
@@ -9,9 +10,15 @@ export class PropertyInMemory implements PropertyRepository {
         this.items = new Array<Property>(...fixtureProperties);
     }
 
-    get(id: string): Promise<Property | undefined> {
-        return new Promise((resolve) => {
-            resolve(this.items.find((item) => item.getId() === id));
+    get(id: string): Promise<Property> {
+        return new Promise((resolve, reject) => {
+            log.info(`searching property id: ${id}`);
+            const ind = this.items.findIndex((item) => item.getId() == id);
+            log.info(`found index ${ind}`);
+            if (ind < 0) {
+                reject('property not found');
+            }
+            resolve(this.items[ind]);
         });
     }
 
@@ -45,6 +52,9 @@ export class PropertyInMemory implements PropertyRepository {
     searchProperties(search?: string): Promise<Property[]> {
         const reg = new RegExp(`/.*${search}/.*`);
         return new Promise<Property[]>((resolve) => {
+            if (!search) {
+                resolve(this.items);
+            }
             resolve(this.items.filter((item) => reg.test(item.name)));
         });
     }

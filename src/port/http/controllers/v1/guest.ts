@@ -68,10 +68,10 @@ export function makeGetGuest(getGuest: any) {
 export function makeSearchProperties(getGuest: any, searchProperties: any) {
     return (req: Request, res: Response) => {
         const userId = (req as CustomRequest).userId;
-
+        log.info(`search properties request: ${req.body.search}`);
         getGuest(userId)
-            .then((mng: Guest) => {
-                return searchProperties();
+            .then((guest: Guest) => {
+                return searchProperties(req.body.search);
             })
             .then((properties: Property[]) => {
                 return res.status(200).send(properties);
@@ -87,7 +87,7 @@ export function makeViewProperty(getGuest: any, viewProperty: any) {
 
         getGuest(userId)
             .then((mng: Guest) => {
-                return viewProperty();
+                return viewProperty(req.params.propertyId);
             })
             .then((property: Property) => {
                 return res.status(200).send(property);
@@ -98,7 +98,7 @@ export function makeViewProperty(getGuest: any, viewProperty: any) {
     };
 }
 
-export function makeBookProperty(getGuest: any, viewProperty: any, bookProperty: any) {
+export function makeBookProperty(getGuest: any, getProperty: any, bookProperty: any) {
     return (req: Request, res: Response) => {
         const userId = (req as CustomRequest).userId;
 
@@ -111,22 +111,25 @@ export function makeBookProperty(getGuest: any, viewProperty: any, bookProperty:
         var guest: Guest;
         var range: DateRange;
         try {
-            const range = new DateRange(new Date(req.body.from), new Date(req.body.to));
+            range = new DateRange(new Date(req.body.from), new Date(req.body.to));
         } catch (err) {
             return res.status(400).send({ message: `incorrcet parameters ${err}` });
         }
 
         getGuest(userId)
-            .then((guest: Guest) => {
-                return viewProperty(req.params.id);
+            .then((g: Guest) => {
+                guest = g;
+                return getProperty(req.params.propertyId);
             })
             .then((property: Property) => {
+                log.info(`booking for guest ${guest.getId()}`);
                 return bookProperty(guest, property, range);
             })
             .then((reservation: Reservation) => {
                 return res.status(200).send(reservation);
             })
             .catch((e: any) => {
+                log.error(`error on booking process ${e}`);
                 return res.status(404).send({ error: `${e}` });
             });
     };
@@ -139,8 +142,9 @@ export function makeUnbookProperty(getGuest: any, deleteReservation: any) {
         var guest: Guest;
 
         getGuest(userId)
-            .then((property: Property) => {
-                return deleteReservation(guest, req.params.id);
+            .then((guest: Guest) => {
+                log.info(`deleting reservation ${req.params.bookId}`);
+                return deleteReservation(guest, req.params.bookId);
             })
             .then(() => {
                 return res.status(200).send('OK');

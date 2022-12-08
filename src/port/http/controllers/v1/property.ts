@@ -106,18 +106,22 @@ export function makeGetReservations(getManager: any, getProperty: any, getReserv
             return res.status(400).send('incorrect date period');
         }
         const userId = (req as CustomRequest).userId;
+        var manager: Manager;
         getManager(userId)
             .then((mng: Manager) => {
-                log.info(`new property request with: `);
+                log.info(`new property request of user: ${userId}`);
+                manager = mng;
                 return getProperty(mng, req.params.id);
             })
             .then((property: Property) => {
-                return getReservations(property, new DateRange(from, to));
+                log.info(`looking reservations for the property ${property.getId()}`);
+                return getReservations(manager, property, new DateRange(from, to));
             })
             .then((reservations: Reservation[]) => {
                 return res.status(200).send(reservations);
             })
             .catch((e: any) => {
+                log.error(`Error: ${e}`);
                 return res.status(404).send(e);
             });
     };

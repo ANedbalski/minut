@@ -6,7 +6,7 @@ import log from '../../../utils/logger';
 import { v4 as uuidv4 } from 'uuid';
 
 export interface PropertyRepository {
-    get(id: string): Promise<Property | undefined>;
+    get(id: string): Promise<Property>;
     listOwnerProperties(owner: Manager): Promise<Property[]>;
     add(property: Property): Promise<void>;
     update(property: Property): Promise<void>;
@@ -17,12 +17,14 @@ export interface ReservationRepository {
     listPropertyReservations(property: Property, range: DateRange): Promise<Reservation[]>;
     add(reservation: Reservation): Promise<Reservation>;
     delete(id: string): Promise<void>;
+    get(id: string): Promise<Reservation>;
 }
 
 export function makeGetProperty(repo: PropertyRepository) {
-    return function (manager: Manager, id: string): Promise<Property | null | undefined> {
+    return function (manager: Manager, id: string): Promise<Property> {
         return new Promise<Property>((resolve, reject) => {
-            repo.get(id).then((res) => {
+            repo.get(id).then((res: Property) => {
+                log.info(`found property ${res.getId()}`);
                 if (!res || !res.isOwner(manager)) {
                     reject(new Error('property not found'));
                 }
@@ -74,9 +76,16 @@ export function makeAddProperty(repo: PropertyRepository) {
 export function makeGetPropertyReservations(repo: ReservationRepository) {
     return (manager: Manager, property: Property, range: DateRange) => {
         return new Promise<Reservation[]>((resolve, reject) => {
+            log.info('getting reservations for the property');
             if (!property.isOwner(manager)) reject(new Error('manager is not owner of property'));
 
-            repo.listPropertyReservations(property, range);
+            repo.listPropertyReservations(property, range)
+                .then((reservations: Reservation[]) => {
+                    resolve(reservations);
+                })
+                .catch((e: any) => {
+                    reject(e);
+                });
         });
     };
 }
@@ -91,8 +100,15 @@ export function makeListProperties(repo: PropertyRepository) {
 // function to retrieve list of properties to book for guests
 export function makeSearchProperties(repo: PropertyRepository) {
     return function (search: string) {
-        return new Promise<Reservation>((resolve, reject) => {
-            return repo.searchProperties(search);
+        return new Promise<Property[]>((resolve, reject) => {
+            log.info(`search for the property: ${search}`);
+            repo.searchProperties(search)
+                .then((res: Property[]) => {
+                    resolve(res);
+                })
+                .catch((e: any) => {
+                    reject(e);
+                });
         });
     };
 }
@@ -100,8 +116,14 @@ export function makeSearchProperties(repo: PropertyRepository) {
 // function to retrieve a properties to book for guests
 export function makeViewProperty(repo: PropertyRepository) {
     return function (id: string) {
-        return new Promise<Reservation>((resolve, reject) => {
-            return repo.get(id);
+        return new Promise<Property>((resolve, reject) => {
+            repo.get(id)
+                .then((property: Property) => {
+                    resolve(property);
+                })
+                .catch((e: any) => {
+                    reject(e);
+                });
         });
     };
 }
@@ -130,9 +152,21 @@ export function makeBookProperty(repo: ReservationRepository) {
 
 // function to retrieve list of properties to book for guests
 export function makeUnbookProperty(repo: ReservationRepository) {
-    return function (id: string) {
-        return new Promise<Reservation>((resolve, reject) => {
-            return repo.delete(id);
+    return function (guest: Guest, id: string) {
+        return new Promise<void>((resolve, reject) => {
+            repo.get(id)
+                .then((reservation) => {
+                    if (reservation.guest.getId() != guest.getId()) {
+                        reject(new Error('access denied'));
+                    }
+                    return repo.delete(id);
+                })
+                .then(() => {
+                    resolve();
+                })
+                .catch((e: any) => {
+                    reject(e);
+                });
         });
     };
 }
