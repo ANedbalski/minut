@@ -14,7 +14,9 @@ export interface PropertyRepository {
 }
 
 export interface ReservationRepository {
-    listPropertyReservations(property: Property): Promise<Reservation[]>;
+    listPropertyReservations(property: Property, range: DateRange): Promise<Reservation[]>;
+    add(reservation: Reservation): Promise<Reservation>;
+    delete(id: string): Promise<void>;
 }
 
 export function makeGetProperty(repo: PropertyRepository) {
@@ -70,8 +72,12 @@ export function makeAddProperty(repo: PropertyRepository) {
 }
 
 export function makeGetPropertyReservations(repo: ReservationRepository) {
-    return (manager: Manager, property: Property) => {
-        return new Promise<Reservation[]>((resolve, reject) => {});
+    return (manager: Manager, property: Property, range: DateRange) => {
+        return new Promise<Reservation[]>((resolve, reject) => {
+            if (!property.isOwner(manager)) reject(new Error('manager is not owner of property'));
+
+            repo.listPropertyReservations(property, range);
+        });
     };
 }
 
@@ -103,16 +109,30 @@ export function makeViewProperty(repo: PropertyRepository) {
 // function to retrieve list of properties to book for guests
 export function makeBookProperty(repo: ReservationRepository) {
     return function (guest: Guest, property: Property, range: DateRange) {
-        repo.listPropertyReservations(property)
-        return new Promise<Reservation>((resolve, reject) => {});
+        return new Promise<Reservation>((resolve, reject) => {
+            const id = uuidv4();
+            repo.listPropertyReservations(property, range)
+                .then((reservations: Reservation[]) => {
+                    if (reservations.length > 0) {
+                        reject(new Error('property is not available at choosed dates'));
+                    }
+                    return repo.add(new Reservation(id, property, guest, range));
+                })
+                .then((reservation: Reservation) => {
+                    resolve(reservation);
+                })
+                .catch((e: any) => {
+                    reject(e);
+                });
+        });
     };
 }
 
 // function to retrieve list of properties to book for guests
-export function makeUnbookProperty(repo: PropertyRepository) {
+export function makeUnbookProperty(repo: ReservationRepository) {
     return function (id: string) {
         return new Promise<Reservation>((resolve, reject) => {
-            return repo.get(id);
+            return repo.delete(id);
         });
     };
 }

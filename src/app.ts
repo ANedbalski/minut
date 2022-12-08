@@ -1,7 +1,5 @@
 import config from './config/config';
 import { serverFactory } from './port/http/server';
-import { makeGetPropertyReservations } from './domain/manager/services/reservation';
-
 import { ReservationInMemory } from './repository/inmemory/reservation';
 import log from './utils/logger';
 import {
@@ -12,7 +10,8 @@ import {
     makeSearchProperties,
     makeViewProperty,
     makeBookProperty,
-    makeUnbookProperty
+    makeUnbookProperty,
+    makeGetPropertyReservations
 } from './domain/manager/services/property';
 import { makeGetManager, makeUpdateManager, makeAddManager } from './domain/manager/services/manager';
 import { makeGetGuest, makeUpdateGuest, makeAddGuest } from './domain/manager/services/guest';
@@ -47,8 +46,8 @@ const serviceDI = {
     updateGuest: makeUpdateGuest(guestRepo),
     searchProperties: makeSearchProperties(propertyRepo),
     viewProperty: makeViewProperty(propertyRepo),
-    bookProperty: makeBookProperty(propertyRepo),
-    unbookProperty: makeUnbookProperty(propertyRepo)
+    bookProperty: makeBookProperty(reservationRepo),
+    unbookProperty: makeUnbookProperty(reservationRepo)
 };
 
 const http = serverFactory(serviceDI, log.child({ module: 'http' }));

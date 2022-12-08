@@ -37,4 +37,6 @@ export class Reservation {
         this.guest = guest;
         this.dateRange = dateRange;
     }
+
+    getId = () => this.id;
 }
